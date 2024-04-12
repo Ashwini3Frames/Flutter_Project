@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
-import 'package:my_application/screens/home_screen.dart';
+import 'package:my_application/screens/signup_screen.dart';
 class SplashScreen extends StatefulWidget{
   const SplashScreen({super.key});
   @override
@@ -14,7 +14,7 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
     SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersive);
     Future.delayed(Duration(seconds: 2),(){
       Navigator.of(context).pushReplacement(MaterialPageRoute(
-        builder: (_)=>const HomeScreen(),
+        builder: (_)=>SignupPage(),
       )
 
       );
