@@ -1,17 +1,27 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/rendering.dart';
 import 'package:my_application/screens/splash_screen.dart';
+import 'package:my_application/data/repositories/user_repository_impl.dart';
+import 'package:my_application/screens/login/login_bloc.dart';
+import 'package:my_application/screens/signup/signup_bloc.dart';
 
-void main(){
-  runApp(const MyApp());
+void main() {
+  runApp(MyApp());
 }
-class MyApp extends StatelessWidget{
-  const MyApp({super.key});
+
+class MyApp extends StatelessWidget {
+  final UserRepositoryImpl userRepository = UserRepositoryImpl();
+
   @override
-  Widget build(BuildContext context){
-    return const MaterialApp(
+  Widget build(BuildContext context) {
+    final loginBloc = LoginBloc(userRepository: userRepository);
+    final signupBloc = SignupBloc(userRepository: userRepository);
+
+    return MaterialApp(
       debugShowCheckedModeBanner: false,
-      home:SplashScreen(),
-    );//material app
+      home: SplashScreen(
+        loginBloc: loginBloc,
+        signupBloc: signupBloc,
+      ),
+    );
   }
 }
