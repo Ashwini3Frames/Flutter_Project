@@ -1,27 +1,28 @@
 import 'package:flutter/material.dart';
-import 'package:my_application/screens/splash_screen.dart';
-import 'package:my_application/data/repositories/user_repository_impl.dart';
-import 'package:my_application/screens/login/login_bloc.dart';
-import 'package:my_application/screens/signup/signup_bloc.dart';
+import 'package:my_application/pages/home_page.dart';
+import 'package:my_application/pages/login_page.dart';
+import 'package:my_application/pages/signup_page.dart';
+import 'package:my_application/pages/splash_screen.dart';
 
 void main() {
   runApp(MyApp());
 }
 
 class MyApp extends StatelessWidget {
-  final UserRepositoryImpl userRepository = UserRepositoryImpl();
-
   @override
   Widget build(BuildContext context) {
-    final loginBloc = LoginBloc(userRepository: userRepository);
-    final signupBloc = SignupBloc(userRepository: userRepository);
-
     return MaterialApp(
-      debugShowCheckedModeBanner: false,
-      home: SplashScreen(
-        loginBloc: loginBloc,
-        signupBloc: signupBloc,
+      title: 'Your Application',
+      theme: ThemeData(
+        primarySwatch: Colors.blue,
       ),
+      initialRoute: '/',
+      routes: {
+        '/': (context) => SplashScreen(), // Splash screen as initial route
+        '/login': (context) => LoginPage(),
+        '/signup': (context) => SignUpPage(),
+        '/home': (context) => HomePage(), // Add route for home screen
+      },
     );
   }
 }

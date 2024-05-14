@@ -1,19 +1,9 @@
+// lib/pages/login_page.dart
 import 'package:flutter/material.dart';
-import 'package:my_application/screens/signup/signup_screen.dart';
-import 'package:my_application/screens/signup/signup_bloc.dart';
-import 'login_bloc.dart';
+import 'package:my_application/models/user_model.dart';
+import 'package:my_application/utils/database_helper.dart';
 
-class LoginPage extends StatefulWidget {
-  final LoginBloc loginBloc;
-  final SignupBloc signupBloc; // Add the signupBloc here
-
-  const LoginPage({Key? key, required this.loginBloc, required this.signupBloc}) : super(key: key);
-
-  @override
-  _LoginPageState createState() => _LoginPageState();
-}
-
-class _LoginPageState extends State<LoginPage> {
+class LoginPage extends StatelessWidget {
   final TextEditingController _identifierController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
 
@@ -42,17 +32,14 @@ class _LoginPageState extends State<LoginPage> {
             SizedBox(height: 20.0),
             ElevatedButton(
               onPressed: () {
-                _login();
+                _login(context);
               },
               child: Text('Login'),
             ),
             SizedBox(height: 20.0),
             TextButton(
               onPressed: () {
-                Navigator.pushReplacement(
-                  context,
-                  MaterialPageRoute(builder: (context) => SignupPage(signupBloc: widget.signupBloc)), // Pass the signupBloc
-                );
+                Navigator.pushNamed(context, '/signup');
               },
               child: Text('Don\'t have an account? Sign Up'),
             ),
@@ -62,9 +49,31 @@ class _LoginPageState extends State<LoginPage> {
     );
   }
 
-  void _login() {
+  void _login(BuildContext context) async {
     final identifier = _identifierController.text;
     final password = _passwordController.text;
-    widget.loginBloc.login();
+    // Here you can implement your login logic
+    // For example, check credentials against the database
+    // Dummy implementation just for demonstration purposes:
+    if (identifier.isNotEmpty && password.isNotEmpty) {
+      // Check credentials against the database
+      UserModel? user = await DatabaseHelper.instance.getUserByEmailOrPhoneNumber(identifier);
+      if (user != null && user.password == password) {
+        // Navigate to home page or any other screen
+        Navigator.pushReplacementNamed(context, '/home');
+      } else {
+        // Show error message
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text('Invalid username or password'),
+          duration: Duration(seconds: 2),
+        ));
+      }
+    } else {
+      // Show error message
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: Text('Please enter username and password'),
+        duration: Duration(seconds: 2),
+      ));
+    }
   }
 }
