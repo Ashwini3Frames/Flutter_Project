@@ -33,10 +33,11 @@ class DatabaseHelper {
     ''');
   }
 
-  Future<int> insertUser(UserModel user) async {
-    final db = await database;
-    return await db.insert('users', user.toJson());
-  }
+ Future<int> insertUser(UserModel user) async {
+  final db = await database;
+  return await db.insert('users', user.toJson(),
+      conflictAlgorithm: ConflictAlgorithm.replace);
+}
 
   Future<List<UserModel>> getAllUsers() async {
     final db = await database;
