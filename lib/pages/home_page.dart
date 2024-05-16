@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:my_application/models/individual_model.dart';
 import 'package:my_application/pages/add_screen.dart';
+import 'package:my_application/pages/login_page.dart';
 import 'package:my_application/pages/update_screen.dart';
 import 'package:my_application/pages/view_screen.dart';
 import 'package:my_application/utils/individual_helper.dart';
@@ -26,6 +27,13 @@ class _HomeScreenState extends State<HomeScreen> {
     setState(() {
       _users = users;
     });
+  }
+
+  void _navigateToLoginScreen() {
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(builder: (context) => LoginPage()),
+    );
   }
 
   void _navigateToAddScreen() async {
@@ -59,11 +67,6 @@ class _HomeScreenState extends State<HomeScreen> {
         title: Text('Individuals List'),
         actions: <Widget>[
           if (selectedUsers.isEmpty)
-            IconButton(
-              icon: Icon(Icons.add),
-              onPressed: _navigateToAddScreen,
-            ),
-          if (selectedUsers.isNotEmpty)
             PopupMenuButton<String>(
               onSelected: (String choice) {
                 switch (choice) {
@@ -76,10 +79,13 @@ class _HomeScreenState extends State<HomeScreen> {
                   case 'Delete':
                     _showDeleteConfirmationDialog();
                     break;
+                  case 'Logout':
+                    _navigateToLoginScreen();
+                    break;
                 }
               },
               itemBuilder: (BuildContext context) {
-                return ['Update', 'View', 'Delete'].map((String choice) {
+                return ['Update', 'View', 'Delete', 'Logout'].map((String choice) {
                   return PopupMenuItem<String>(
                     value: choice,
                     child: Text(choice),
@@ -89,57 +95,70 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
         ],
       ),
-      body: ListView.builder(
-        itemCount: _users.length,
-        itemBuilder: (context, index) {
-          return ListTile(
-            title: Text(_users[index].fullName ?? ''),
-            subtitle: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(_users[index].phoneNumber ?? ''),
-                Text(_users[index].role ?? ''),
-              ],
-            ),
-            leading: Checkbox(
-              value: selectedUsers.contains(_users[index]),
-              onChanged: (bool? value) {
-                setState(() {
-                  if (value != null) {
-                    if (value) {
-                      selectedUsers.add(_users[index]);
+      body: Column(
+        children: [
+          Expanded(
+            child: ListView.builder(
+              itemCount: _users.length,
+              itemBuilder: (context, index) {
+                return ListTile(
+                  title: Text(_users[index].fullName ?? ''),
+                  subtitle: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(_users[index].phoneNumber ?? ''),
+                      Text(_users[index].role ?? ''),
+                    ],
+                  ),
+                  leading: Checkbox(
+                    value: selectedUsers.contains(_users[index]),
+                    onChanged: (bool? value) {
+                      setState(() {
+                        if (value != null) {
+                          if (value) {
+                            selectedUsers.add(_users[index]);
+                          } else {
+                            selectedUsers.remove(_users[index]);
+                          }
+                        }
+                      });
+                    },
+                  ),
+                  onTap: () {
+                    if (selectedUsers.isNotEmpty) {
+                      setState(() {
+                        if (selectedUsers.contains(_users[index])) {
+                          selectedUsers.remove(_users[index]);
+                        } else {
+                          selectedUsers.add(_users[index]);
+                        }
+                      });
                     } else {
-                      selectedUsers.remove(_users[index]);
+                      _navigateToUpdateScreen(_users[index]);
                     }
-                  }
-                });
+                  },
+                  onLongPress: () {
+                    setState(() {
+                      if (selectedUsers.contains(_users[index])) {
+                        selectedUsers.remove(_users[index]);
+                      } else {
+                        selectedUsers.add(_users[index]);
+                      }
+                    });
+                  },
+                );
               },
             ),
-            onTap: () {
-              if (selectedUsers.isNotEmpty) {
-                setState(() {
-                  if (selectedUsers.contains(_users[index])) {
-                    selectedUsers.remove(_users[index]);
-                  } else {
-                    selectedUsers.add(_users[index]);
-                  }
-                });
-              } else {
-                _navigateToUpdateScreen(_users[index]);
-              }
-            },
-            onLongPress: () {
-              setState(() {
-                if (selectedUsers.contains(_users[index])) {
-                  selectedUsers.remove(_users[index]);
-                } else {
-                  selectedUsers.add(_users[index]);
-                }
-              });
-            },
-          );
-        },
+          ),
+        ],
       ),
+      floatingActionButton: selectedUsers.isEmpty
+          ? FloatingActionButton(
+              onPressed: _navigateToAddScreen,
+              child: Icon(Icons.add),
+            )
+          : null,
+      floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
     );
   }
 
