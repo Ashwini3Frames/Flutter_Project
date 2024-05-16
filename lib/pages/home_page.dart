@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:my_application/models/individual_model.dart';
-import 'package:my_application/pagess/add_screen.dart';
+import 'package:my_application/pages/add_screen.dart';
 import 'package:my_application/pages/update_screen.dart';
 import 'package:my_application/pages/view_screen.dart';
 import 'package:my_application/utils/individual_helper.dart';
@@ -39,7 +39,7 @@ class _HomeScreenState extends State<HomeScreen> {
   void _navigateToUpdateScreen(Individual user) async {
     await Navigator.push(
       context,
-      MaterialPageRoute(builder: (context) => UpdateScreen(user)),
+      MaterialPageRoute(builder: (context) => UpdateScreen(user: user)),
     );
     _updateUserList();
   }
@@ -47,7 +47,7 @@ class _HomeScreenState extends State<HomeScreen> {
   void _navigateToViewScreen(Individual user) async {
     await Navigator.push(
       context,
-      MaterialPageRoute(builder: (context) => ViewScreen(user)),
+      MaterialPageRoute(builder: (context) => ViewScreen(user: user)),
     );
     // No need to update user list after viewing
   }
@@ -93,24 +93,25 @@ class _HomeScreenState extends State<HomeScreen> {
         itemCount: _users.length,
         itemBuilder: (context, index) {
           return ListTile(
-            title: Text(_users[index].fullName),
+            title: Text(_users[index].fullName ?? ''),
             subtitle: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(_users[index].phoneNumber),
-                Text(_users[index].role),
+                Text(_users[index].phoneNumber ?? ''),
+                Text(_users[index].role ?? ''),
               ],
             ),
             leading: Checkbox(
               value: selectedUsers.contains(_users[index]),
               onChanged: (bool? value) {
                 setState(() {
-                  if(value!=null){
-                  if (value) {
-                    selectedUsers.add(_users[index]);
-                  } else {
-                    selectedUsers.remove(_users[index]);
-                  }}
+                  if (value != null) {
+                    if (value) {
+                      selectedUsers.add(_users[index]);
+                    } else {
+                      selectedUsers.remove(_users[index]);
+                    }
+                  }
                 });
               },
             ),
@@ -171,7 +172,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
   void _deleteSelectedUsers() async {
     for (Individual user in selectedUsers) {
-      await _databaseHelper.deleteUser(user.id);
+      await _databaseHelper.deleteUser(user.id ?? 0);
     }
     _updateUserList();
     setState(() {

@@ -1,11 +1,15 @@
+
+import 'dart:io';
+
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:my_application/models/individual_model.dart';
 import 'package:my_application/utils/individual_helper.dart';
 
 class UpdateScreen extends StatefulWidget {
   final Individual user;
 
-  UpdateScreen(this.user);
+   UpdateScreen({required this.user});
 
   @override
   _UpdateScreenState createState() => _UpdateScreenState();
@@ -16,8 +20,10 @@ class _UpdateScreenState extends State<UpdateScreen> {
   final _nameController = TextEditingController();
   final _emailController = TextEditingController();
   final _phoneController = TextEditingController();
-  String _selectedGender="Male";
+  String _selectedGender = "Male";
   String? _selectedRole;
+  String? _profilePicUrl;
+  final _picker = ImagePicker();
 
   List<String> _roles = ['Admin', 'User', 'Moderator'];
 
@@ -29,8 +35,19 @@ class _UpdateScreenState extends State<UpdateScreen> {
     _nameController.text = widget.user.fullName;
     _emailController.text = widget.user.email;
     _phoneController.text = widget.user.phoneNumber;
-    _selectedGender = widget.user.gender;
+    _selectedGender = widget.user.gender ?? "Male";
     _selectedRole = widget.user.role;
+    _profilePicUrl = widget.user.profilePicUrl;
+  }
+
+  Future<void> _getImage() async {
+    final pickedFile = await _picker.pickImage(source: ImageSource.gallery);
+
+    if (pickedFile != null) {
+      setState(() {
+        _profilePicUrl = pickedFile.path;
+      });
+    }
   }
 
   @override
@@ -49,12 +66,12 @@ class _UpdateScreenState extends State<UpdateScreen> {
                 controller: _nameController,
                 decoration: InputDecoration(labelText: 'Full Name'),
                 validator: (value) {
-                   if (value?.isEmpty ?? true) { // Use the null-aware operator
-    return 'Please enter a full name';
-  }                 if (value!.length < 4 || value.length > 50) { // Add a null check (!) because we know value is not null if isEmpty is false
-    return 'Full name should be between 4 and 50 characters';
-  }
-                  
+                  if (value?.isEmpty ?? true) {
+                    return 'Please enter a full name';
+                  }
+                  if (value!.length < 4 || value.length > 50) {
+                    return 'Full name should be between 4 and 50 characters';
+                  }
                   return null;
                 },
               ),
@@ -62,10 +79,12 @@ class _UpdateScreenState extends State<UpdateScreen> {
                 controller: _emailController,
                 decoration: InputDecoration(labelText: 'Email'),
                 validator: (value) {
-                  if (value?.isEmpty??true) {
+                  if (value?.isEmpty ?? true) {
                     return 'Please enter an email';
                   }
-                  if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(value??"")) {
+                  if (!RegExp(
+                          r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$')
+                      .hasMatch(value ?? "")) {
                     return 'Please enter a valid email';
                   }
                   return null;
@@ -76,10 +95,10 @@ class _UpdateScreenState extends State<UpdateScreen> {
                 keyboardType: TextInputType.phone,
                 decoration: InputDecoration(labelText: 'Phone Number'),
                 validator: (value) {
-                  if (value?.isEmpty??true) {
+                  if (value?.isEmpty ?? true) {
                     return 'Please enter a phone number';
                   }
-                  if (value!.length!=10) {
+                  if (value!.length != 10) {
                     return 'Phone number must be 10 digits';
                   }
                   return null;
@@ -91,7 +110,7 @@ class _UpdateScreenState extends State<UpdateScreen> {
                 groupValue: _selectedGender,
                 onChanged: (value) {
                   setState(() {
-                    _selectedGender = value??"";
+                    _selectedGender = value ?? "";
                   });
                 },
               ),
@@ -101,7 +120,7 @@ class _UpdateScreenState extends State<UpdateScreen> {
                 groupValue: _selectedGender,
                 onChanged: (value) {
                   setState(() {
-                    _selectedGender = value??"";
+                    _selectedGender = value ?? "";
                   });
                 },
               ),
@@ -109,7 +128,7 @@ class _UpdateScreenState extends State<UpdateScreen> {
                 value: _selectedRole,
                 onChanged: (value) {
                   setState(() {
-                    _selectedRole = value;
+                    _selectedRole = value as String?;
                   });
                 },
                 items: _roles.map((role) {
@@ -126,17 +145,25 @@ class _UpdateScreenState extends State<UpdateScreen> {
                   return null;
                 },
               ),
-              SizedBox(height: 20),
+              ListTile(
+                title: Text('Profile Picture'),
+                subtitle: _profilePicUrl == null
+                    ? Text('No image selected')
+                    : Image.file(File(_profilePicUrl!)),
+                onTap: _getImage,
+              ),
               ElevatedButton(
                 onPressed: () {
-                  if (_formKey.currentState != null && _formKey.currentState!.validate()) {
-                      Individual updatedUser = Individual(
+                  if (_formKey.currentState != null &&
+                      _formKey.currentState!.validate()) {
+                    Individual updatedUser = Individual(
                       id: widget.user.id,
                       fullName: _nameController.text,
                       email: _emailController.text,
                       phoneNumber: _phoneController.text,
                       gender: _selectedGender,
                       role: _selectedRole,
+                      profilePicUrl: _profilePicUrl,
                     );
                     _databaseHelper.updateUser(updatedUser);
                     Navigator.pop(context);

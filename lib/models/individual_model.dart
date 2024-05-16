@@ -1,14 +1,14 @@
 class Individual {
-  int id;
+  int? id;
   String fullName;
   String email;
   String phoneNumber;
   String gender;
-  String role;
-  String profilePicUrl;
+  String? role;
+  String? profilePicUrl;
 
   Individual({
-    required this.id,
+    this.id,
     required this.fullName,
     required this.email,
     required this.phoneNumber,
@@ -19,7 +19,6 @@ class Individual {
 
   Map<String, dynamic> toMap() {
     return {
-      'id': id,
       'fullName': fullName,
       'email': email,
       'phoneNumber': phoneNumber,
