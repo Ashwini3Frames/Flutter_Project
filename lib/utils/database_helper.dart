@@ -1,4 +1,3 @@
-// lib/utils/database_helper.dart
 import 'package:path/path.dart';
 import 'package:sqflite/sqflite.dart';
 import '../models/user_model.dart';
@@ -33,23 +32,23 @@ class DatabaseHelper {
     ''');
   }
 
- Future<int> insertUser(UserModel user) async {
-  final db = await database;
-  return await db.insert('users', user.toJson(),
-      conflictAlgorithm: ConflictAlgorithm.replace);
-}
+  Future<int> insertUser(UserModel user) async {
+    final db = await database;
+    return await db.insert('users', user.toJson(),
+        conflictAlgorithm: ConflictAlgorithm.replace);
+  }
 
   Future<List<UserModel>> getAllUsers() async {
     final db = await database;
     final List<Map<String, dynamic>> maps = await db.query('users');
     return List.generate(maps.length, (i) {
       return UserModel(
-        maps[i]['id'],
-        maps[i]['fullName'],
-        maps[i]['email'],
-        maps[i]['phoneNumber'],
-        maps[i]['gender'],
-        maps[i]['password'],
+        id: maps[i]['id'],
+        fullName: maps[i]['fullName'],
+        email: maps[i]['email'],
+        phoneNumber: maps[i]['phoneNumber'],
+        gender: maps[i]['gender'],
+        password: maps[i]['password'],
       );
     });
   }
