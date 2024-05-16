@@ -1,4 +1,3 @@
-
 import 'package:flutter/material.dart';
 import 'package:my_application/models/individual_model.dart';
 import 'package:my_application/pages/add_screen.dart';
@@ -96,6 +95,7 @@ class _HomeScreenState extends State<HomeScreen> {
     _updateUserList();
     setState(() {
       selectedUsers.clear();
+      _isSelectAllVisible = false;
     });
   }
 
@@ -185,6 +185,25 @@ class _HomeScreenState extends State<HomeScreen> {
                       Text(_users[index].role ?? ''),
                     ],
                   ),
+                  onTap: () {
+                    if (!_isSelectAllVisible) {
+                      setState(() {
+                        if (selectedUsers.contains(_users[index])) {
+                          selectedUsers.remove(_users[index]);
+                        } else {
+                          selectedUsers.add(_users[index]);
+                        }
+                      });
+                    }
+                  },
+                  onLongPress: () {
+                    setState(() {
+                      if (!_isSelectAllVisible) {
+                        _isSelectAllVisible = true;
+                        selectedUsers.add(_users[index]);
+                      }
+                    });
+                  },
                   leading: _isSelectAllVisible
                       ? Checkbox(
                           value: selectedUsers.contains(_users[index]),
@@ -201,19 +220,6 @@ class _HomeScreenState extends State<HomeScreen> {
                           },
                         )
                       : null,
-                  onTap: () {
-                    if (!_isSelectAllVisible) {
-                      _navigateToUpdateScreen(_users[index]);
-                    }
-                  },
-                  onLongPress: () {
-                    setState(() {
-                      if (!_isSelectAllVisible) {
-                        _isSelectAllVisible = true;
-                        selectedUsers.add(_users[index]);
-                      }
-                    });
-                  },
                 );
               },
             ),
