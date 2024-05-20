@@ -1,8 +1,9 @@
 // lib/pages/login_page.dart
 import 'package:flutter/material.dart';
 import 'package:my_application/models/user_model.dart';
+import 'package:my_application/pages/signup_page.dart';
 import 'package:my_application/utils/database_helper.dart';
-
+import 'package:get/get.dart';
 class LoginPage extends StatelessWidget {
   final TextEditingController _identifierController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
@@ -39,7 +40,9 @@ class LoginPage extends StatelessWidget {
             SizedBox(height: 20.0),
             TextButton(
               onPressed: () {
-                Navigator.pushNamed(context, '/signup');
+                Get.toNamed('/signup');
+                 // Navigator.of(context).pushReplacement(MaterialPageRoute(builder: (context) => SignUpPage()));
+               // Navigator.pushNamed(context, '/signup');
               },
               child: Text('Don\'t have an account? Sign Up'),
             ),
@@ -60,7 +63,7 @@ class LoginPage extends StatelessWidget {
       UserModel? user = await DatabaseHelper.instance.getUserByEmailOrPhoneNumber(identifier);
       if (user != null && user.password == password) {
         // Navigate to home page or any other screen
-        Navigator.pushReplacementNamed(context, '/home');
+        Get.offAllNamed('/home');
       } else {
         // Show error message
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(

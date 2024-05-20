@@ -1,57 +1,19 @@
-
-import 'dart:io';
+ import 'dart:io';
 
 import 'package:flutter/material.dart';
-import 'package:image_picker/image_picker.dart';
+import 'package:get/get.dart';
+import 'package:my_application/controllers/update_controller.dart';
 import 'package:my_application/models/individual_model.dart';
-import 'package:my_application/utils/individual_helper.dart';
 
-class UpdateScreen extends StatefulWidget {
+class UpdateScreen extends StatelessWidget {
   final Individual user;
 
-   UpdateScreen({required this.user});
-
-  @override
-  _UpdateScreenState createState() => _UpdateScreenState();
-}
-
-class _UpdateScreenState extends State<UpdateScreen> {
-  final _formKey = GlobalKey<FormState>();
-  final _nameController = TextEditingController();
-  final _emailController = TextEditingController();
-  final _phoneController = TextEditingController();
-  String _selectedGender = "Male";
-  String? _selectedRole;
-  String? _profilePicUrl;
-  final _picker = ImagePicker();
-
-  List<String> _roles = ['Admin', 'User', 'Moderator'];
-
-  final IndividualHelper _databaseHelper = IndividualHelper();
-
-  @override
-  void initState() {
-    super.initState();
-    _nameController.text = widget.user.fullName;
-    _emailController.text = widget.user.email;
-    _phoneController.text = widget.user.phoneNumber;
-    _selectedGender = widget.user.gender ?? "Male";
-    _selectedRole = widget.user.role;
-    _profilePicUrl = widget.user.profilePicUrl;
-  }
-
-  Future<void> _getImage() async {
-    final pickedFile = await _picker.pickImage(source: ImageSource.gallery);
-
-    if (pickedFile != null) {
-      setState(() {
-        _profilePicUrl = pickedFile.path;
-      });
-    }
-  }
+  UpdateScreen({required this.user});
 
   @override
   Widget build(BuildContext context) {
+    final UpdateController controller = Get.put(UpdateController(user));
+
     return Scaffold(
       appBar: AppBar(
         title: Text('Update User'),
@@ -59,11 +21,11 @@ class _UpdateScreenState extends State<UpdateScreen> {
       body: Padding(
         padding: EdgeInsets.all(16.0),
         child: Form(
-          key: _formKey,
+          key: controller.formKey,
           child: ListView(
             children: <Widget>[
               TextFormField(
-                controller: _nameController,
+                controller: controller.nameController,
                 decoration: InputDecoration(labelText: 'Full Name'),
                 validator: (value) {
                   if (value?.isEmpty ?? true) {
@@ -76,22 +38,20 @@ class _UpdateScreenState extends State<UpdateScreen> {
                 },
               ),
               TextFormField(
-                controller: _emailController,
+                controller: controller.emailController,
                 decoration: InputDecoration(labelText: 'Email'),
                 validator: (value) {
                   if (value?.isEmpty ?? true) {
                     return 'Please enter an email';
                   }
-                  if (!RegExp(
-                          r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$')
-                      .hasMatch(value ?? "")) {
+                  if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(value ?? "")) {
                     return 'Please enter a valid email';
                   }
                   return null;
                 },
               ),
               TextFormField(
-                controller: _phoneController,
+                controller: controller.phoneController,
                 keyboardType: TextInputType.phone,
                 decoration: InputDecoration(labelText: 'Phone Number'),
                 validator: (value) {
@@ -104,34 +64,32 @@ class _UpdateScreenState extends State<UpdateScreen> {
                   return null;
                 },
               ),
-              RadioListTile(
-                title: Text('Male'),
-                value: 'Male',
-                groupValue: _selectedGender,
+              Obx(() => Column(
+                children: [
+                  RadioListTile(
+                    title: Text('Male'),
+                    value: 'Male',
+                    groupValue: controller.selectedGender.value,
+                    onChanged: (value) {
+                      controller.selectedGender.value = value ?? "";
+                    },
+                  ),
+                  RadioListTile(
+                    title: Text('Female'),
+                    value: 'Female',
+                    groupValue: controller.selectedGender.value,
+                    onChanged: (value) {
+                      controller.selectedGender.value = value ?? "";
+                    },
+                  ),
+                ],
+              )),
+              Obx(() => DropdownButtonFormField(
+                value: controller.selectedRole.value.isEmpty ? null : controller.selectedRole.value,
                 onChanged: (value) {
-                  setState(() {
-                    _selectedGender = value ?? "";
-                  });
+                  controller.selectedRole.value = value as String;
                 },
-              ),
-              RadioListTile(
-                title: Text('Female'),
-                value: 'Female',
-                groupValue: _selectedGender,
-                onChanged: (value) {
-                  setState(() {
-                    _selectedGender = value ?? "";
-                  });
-                },
-              ),
-              DropdownButtonFormField(
-                value: _selectedRole,
-                onChanged: (value) {
-                  setState(() {
-                    _selectedRole = value as String?;
-                  });
-                },
-                items: _roles.map((role) {
+                items: controller.roles.map((role) {
                   return DropdownMenuItem(
                     value: role,
                     child: Text(role),
@@ -144,31 +102,16 @@ class _UpdateScreenState extends State<UpdateScreen> {
                   }
                   return null;
                 },
-              ),
-              ListTile(
+              )),
+              Obx(() => ListTile(
                 title: Text('Profile Picture'),
-                subtitle: _profilePicUrl == null
+                subtitle: controller.profilePicUrl.value.isEmpty
                     ? Text('No image selected')
-                    : Image.file(File(_profilePicUrl!)),
-                onTap: _getImage,
-              ),
+                    : Image.file(File(controller.profilePicUrl.value)),
+                onTap: () => controller.getImage(),
+              )),
               ElevatedButton(
-                onPressed: () {
-                  if (_formKey.currentState != null &&
-                      _formKey.currentState!.validate()) {
-                    Individual updatedUser = Individual(
-                      id: widget.user.id,
-                      fullName: _nameController.text,
-                      email: _emailController.text,
-                      phoneNumber: _phoneController.text,
-                      gender: _selectedGender,
-                      role: _selectedRole,
-                      profilePicUrl: _profilePicUrl,
-                    );
-                    _databaseHelper.updateUser(updatedUser);
-                    Navigator.pop(context);
-                  }
-                },
+                onPressed: controller.updateUser,
                 child: Text('Update'),
               ),
             ],

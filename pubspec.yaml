@@ -24,9 +24,11 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+  get: ^4.6.5
   sqflite: ^2.3.3+1
   cupertino_icons: ^1.0.6
-  image_picker: ^0.8.4+4
+  image_picker: ^1.1.1
+  get_storage: ^2.1.1
 dev_dependencies:
   flutter_test:
     sdk: flutter
@@ -36,3 +38,4 @@ flutter:
   uses-material-design: true
   assets:
     - assets/background_img.jpg
+    - assets/default_profile.png

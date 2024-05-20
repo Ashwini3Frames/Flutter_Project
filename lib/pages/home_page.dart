@@ -1,113 +1,10 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
-import 'package:my_application/models/individual_model.dart';
-import 'package:my_application/pages/add_screen.dart';
-import 'package:my_application/pages/login_page.dart';
-import 'package:my_application/pages/update_screen.dart';
-import 'package:my_application/pages/view_screen.dart';
-import 'package:my_application/utils/individual_helper.dart';
+import 'package:get/get.dart';
+import 'package:my_application/controllers/home_controller.dart';
 
-class HomeScreen extends StatefulWidget {
-  @override
-  _HomeScreenState createState() => _HomeScreenState();
-}
-
-class _HomeScreenState extends State<HomeScreen> {
-  List<Individual> _users = [];
-  List<Individual> selectedUsers = [];
-  IndividualHelper _databaseHelper = IndividualHelper();
-  bool _isSelectAllVisible = false;
-
-  @override
-  void initState() {
-    super.initState();
-    _updateUserList();
-  }
-
-  void _updateUserList() async {
-    List<Individual> users = await _databaseHelper.getUsers();
-    setState(() {
-      _users = users;
-    });
-  }
-
-  void _navigateToLoginScreen() {
-    Navigator.pushReplacement(
-      context,
-      MaterialPageRoute(builder: (context) => LoginPage()),
-    );
-  }
-
-  void _navigateToAddScreen() async {
-    await Navigator.push(
-      context,
-      MaterialPageRoute(builder: (context) => AddScreen()),
-    );
-    _updateUserList();
-  }
-
-  void _navigateToUpdateScreen(Individual user) async {
-    await Navigator.push(
-      context,
-      MaterialPageRoute(builder: (context) => UpdateScreen(user: user)),
-    );
-    _updateUserList();
-  }
-
-  void _navigateToViewScreen(Individual user) async {
-    await Navigator.push(
-      context,
-      MaterialPageRoute(builder: (context) => ViewScreen(user: user)),
-    );
-    // No need to update user list after viewing
-  }
-
-  void _showDeleteConfirmationDialog() {
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: Text('Confirm Delete'),
-          content: Text('Are you sure you want to delete selected users?'),
-          actions: <Widget>[
-            TextButton(
-              onPressed: () {
-                Navigator.of(context).pop();
-              },
-              child: Text('Cancel'),
-            ),
-            TextButton(
-              onPressed: () {
-                _deleteSelectedUsers();
-                Navigator.of(context).pop();
-              },
-              child: Text('Delete'),
-            ),
-          ],
-        );
-      },
-    );
-  }
-
-  void _deleteSelectedUsers() async {
-    for (Individual user in selectedUsers) {
-      await _databaseHelper.deleteUser(user.id ?? 0);
-    }
-    _updateUserList();
-    setState(() {
-      selectedUsers.clear();
-      _isSelectAllVisible = false;
-    });
-  }
-
-  void _toggleSelectAll(bool? isChecked) {
-    setState(() {
-      if (isChecked != null && isChecked) {
-        selectedUsers.addAll(_users);
-      } else {
-        selectedUsers.clear();
-      }
-    });
-  }
+class HomeScreen extends StatelessWidget {
+  final HomeController controller = Get.put(HomeController());
 
   @override
   Widget build(BuildContext context) {
@@ -115,33 +12,34 @@ class _HomeScreenState extends State<HomeScreen> {
       appBar: AppBar(
         title: Text('Individuals List'),
         actions: <Widget>[
-          if (selectedUsers.isNotEmpty)
-            IconButton(
-              icon: Icon(Icons.delete),
-              onPressed: () {
-                _showDeleteConfirmationDialog();
-              },
-            ),
+          Obx(() {
+            return controller.selectedUsers.isNotEmpty
+                ? IconButton(
+                    icon: Icon(Icons.delete),
+                    onPressed: () {
+                      controller.showDeleteConfirmationDialog();
+                    },
+                  )
+                : Container();
+          }),
           PopupMenuButton<String>(
             onSelected: (String choice) {
               switch (choice) {
                 case 'Update':
-                  if (_isSelectAllVisible) {
-                    _navigateToUpdateScreen(selectedUsers.first);
+                  if (controller.isSelectAllVisible.value) {
+                    controller.navigateToUpdateScreen(controller.selectedUsers.first);
                   }
                   break;
                 case 'View':
-                  if (_isSelectAllVisible) {
-                    _navigateToViewScreen(selectedUsers.first);
+                  if (controller.isSelectAllVisible.value) {
+                    controller.navigateToViewScreen(controller.selectedUsers.first);
                   }
                   break;
                 case 'Delete':
-                  setState(() {
-                    _isSelectAllVisible = true;
-                  });
+                  controller.isSelectAllVisible.value = true;
                   break;
                 case 'Logout':
-                  _navigateToLoginScreen();
+                  controller.navigateToLoginScreen();
                   break;
               }
             },
@@ -158,79 +56,98 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
       body: Column(
         children: [
-          if (_isSelectAllVisible)
-            Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.end,
-                children: [
-                  Text('Select All'),
-                  Checkbox(
-                    value: selectedUsers.length == _users.length,
-                    onChanged: _toggleSelectAll,
-                  ),
-                ],
-              ),
-            ),
+          Obx(() {
+            return controller.isSelectAllVisible.value
+                ? Padding(
+                    padding: const EdgeInsets.all(8.0),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      children: [
+                        Text('Select All'),
+                        Checkbox(
+                          value: controller.selectedUsers.length == controller.users.length,
+                          onChanged: ((isChecked) => controller.toggleSelectAll(isChecked)),
+                        ),
+                      ],
+                    ),
+                  )
+                : Container();
+          }),
           Expanded(
-            child: ListView.builder(
-              itemCount: _users.length,
-              itemBuilder: (context, index) {
-                return ListTile(
-                  title: Text(_users[index].fullName ?? ''),
-                  subtitle: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(_users[index].phoneNumber ?? ''),
-                      Text(_users[index].role ?? ''),
-                    ],
-                  ),
-                  onTap: () {
-                    if (!_isSelectAllVisible) {
-                      setState(() {
-                        if (selectedUsers.contains(_users[index])) {
-                          selectedUsers.remove(_users[index]);
+            child: Obx(() {
+              return ListView.builder(
+                itemCount: controller.users.length,
+                itemBuilder: (context, index) {
+                  return ListTile(
+                    leading: CircleAvatar(
+                      backgroundImage: _getProfileImage(controller.users[index].profilePicUrl),
+                      // child: controller.users[index].profilePicUrl == null
+                      //     ? Icon(Icons.person)
+                      //     : null,
+                    ),
+                    title: Text(controller.users[index].fullName ?? ''),
+                    subtitle: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(controller.users[index].phoneNumber ?? ''),
+                        Text(controller.users[index].role ?? ''),
+                      ],
+                    ),
+                    onTap: () {
+                      if (!controller.isSelectAllVisible.value) {
+                        if (controller.selectedUsers.contains(controller.users[index])) {
+                          controller.selectedUsers.remove(controller.users[index]);
                         } else {
-                          selectedUsers.add(_users[index]);
+                          controller.selectedUsers.add(controller.users[index]);
                         }
-                      });
-                    }
-                  },
-                  onLongPress: () {
-                    setState(() {
-                      if (!_isSelectAllVisible) {
-                        _isSelectAllVisible = true;
-                        selectedUsers.add(_users[index]);
                       }
-                    });
-                  },
-                  leading: _isSelectAllVisible
-                      ? Checkbox(
-                          value: selectedUsers.contains(_users[index]),
-                          onChanged: (bool? isChecked) {
-                            setState(() {
-                              if (isChecked != null) {
-                                if (isChecked) {
-                                  selectedUsers.add(_users[index]);
-                                } else {
-                                  selectedUsers.remove(_users[index]);
+                    },
+                    onLongPress: () {
+                      if (!controller.isSelectAllVisible.value) {
+                        controller.isSelectAllVisible.value = true;
+                        controller.selectedUsers.add(controller.users[index]);
+                      }
+                    },
+                    trailing: Obx(() {
+                      return controller.isSelectAllVisible.value
+                          ? Checkbox(
+                              value: controller.selectedUsers.contains(controller.users[index]),
+                              onChanged: (bool? isChecked) {
+                                if (isChecked != null) {
+                                  if (isChecked) {
+                                    controller.selectedUsers.add(controller.users[index]);
+                                  } else {
+                                    controller.selectedUsers.remove(controller.users[index]);
+                                  }
                                 }
-                              }
-                            });
-                          },
-                        )
-                      : null,
-                );
-              },
-            ),
+                              },
+                            )
+                          : SizedBox();
+                    }),
+                  );
+                },
+              );
+            }),
           ),
         ],
       ),
       floatingActionButton: FloatingActionButton(
-        onPressed: _navigateToAddScreen,
+        onPressed: controller.navigateToAddScreen,
         child: Icon(Icons.add),
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
     );
+  }
+
+  ImageProvider<Object> _getProfileImage(String? profilePicUrl) {
+    if (profilePicUrl != null && profilePicUrl.isNotEmpty) {
+      if (profilePicUrl.startsWith('http')) {
+        return NetworkImage(profilePicUrl);
+      } else {
+        return FileImage(File(profilePicUrl));
+      }
+    } else {
+      return AssetImage('assets/default_profile.png'); // Path to your default image
+    }
   }
 }

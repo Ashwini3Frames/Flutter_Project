@@ -1,40 +1,14 @@
 import 'dart:io';
+
 import 'package:flutter/material.dart';
-import 'package:image_picker/image_picker.dart';
-import 'package:my_application/utils/individual_helper.dart';
-import 'package:my_application/models/individual_model.dart'; 
-class AddScreen extends StatefulWidget {
-  @override
-  _AddScreenState createState() => _AddScreenState();
-}
+import 'package:get/get.dart';
+import 'package:my_application/controllers/add_controller.dart';
 
-class _AddScreenState extends State<AddScreen> {
-  final _formKey = GlobalKey<FormState>();
-  final _nameController = TextEditingController();
-  final _emailController = TextEditingController();
-  final _phoneController = TextEditingController();
-  String? _selectedGender = 'Male'; // Initialize with default value
-  String? _selectedRole = 'Admin'; // Initialize with default value
-  String? _profilePicUrl; // Variable to store the selected profile picture URL
-  final _picker = ImagePicker(); // Image picker instance
-
-  List<String> _roles = ['Admin', 'User', 'Moderator'];
-
-  final IndividualHelper _databaseHelper = IndividualHelper();
-
-  // Method to handle image selection
-  Future<void> _getImage() async {
-    final pickedFile = await _picker.pickImage(source: ImageSource.gallery);
-
-    if (pickedFile != null) {
-      setState(() {
-        _profilePicUrl = pickedFile.path;
-      });
-    }
-  }
-
+class AddScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
+    final AddController controller = Get.put(AddController());
+
     return Scaffold(
       appBar: AppBar(
         title: Text('Add User'),
@@ -42,11 +16,11 @@ class _AddScreenState extends State<AddScreen> {
       body: Padding(
         padding: EdgeInsets.all(16.0),
         child: Form(
-          key: _formKey,
+          key: controller.formKey.value,
           child: ListView(
             children: <Widget>[
               TextFormField(
-                controller: _nameController,
+                controller: controller.nameController.value,
                 decoration: InputDecoration(labelText: 'Full Name'),
                 validator: (value) {
                   if (value == null || value.isEmpty) {
@@ -59,7 +33,7 @@ class _AddScreenState extends State<AddScreen> {
                 },
               ),
               TextFormField(
-                controller: _emailController,
+                controller: controller.emailController.value,
                 decoration: InputDecoration(labelText: 'Email'),
                 validator: (value) {
                   if (value == null || value.isEmpty) {
@@ -72,7 +46,7 @@ class _AddScreenState extends State<AddScreen> {
                 },
               ),
               TextFormField(
-                controller: _phoneController,
+                controller: controller.phoneController.value,
                 keyboardType: TextInputType.phone,
                 decoration: InputDecoration(labelText: 'Phone Number'),
                 validator: (value) {
@@ -85,34 +59,28 @@ class _AddScreenState extends State<AddScreen> {
                   return null;
                 },
               ),
-              RadioListTile(
+              Obx(() => RadioListTile(
                 title: Text('Male'),
                 value: 'Male',
-                groupValue: _selectedGender,
+                groupValue: controller.selectedGender.value,
                 onChanged: (value) {
-                  setState(() {
-                    _selectedGender = value;
-                  });
+                  controller.selectedGender.value = value ?? '';
                 },
-              ),
-              RadioListTile(
+              )),
+              Obx(() => RadioListTile(
                 title: Text('Female'),
                 value: 'Female',
-                groupValue: _selectedGender,
+                groupValue: controller.selectedGender.value,
                 onChanged: (value) {
-                  setState(() {
-                    _selectedGender = value;
-                  });
+                  controller.selectedGender.value = value ?? '';
                 },
-              ),
-              DropdownButtonFormField(
-                value: _selectedRole,
+              )),
+              Obx(() => DropdownButtonFormField(
+                value: controller.selectedRole.value,
                 onChanged: (value) {
-                  setState(() {
-                    _selectedRole = value as String?;
-                  });
+                  controller.selectedRole.value = value as String;
                 },
-                items: _roles.map((role) {
+                items: controller.roles.map((role) {
                   return DropdownMenuItem(
                     value: role,
                     child: Text(role),
@@ -125,30 +93,17 @@ class _AddScreenState extends State<AddScreen> {
                   }
                   return null;
                 },
-              ),
-              ListTile(
+              )),
+              Obx(() => ListTile(
                 title: Text('Profile Picture'),
-                subtitle: _profilePicUrl == null
+                subtitle: controller.profilePicUrl.value.isEmpty
                     ? Text('No image selected')
-                    : Image.file(File(_profilePicUrl!)),
-                onTap: _getImage,
-              ),
+                    : Image.file(File(controller.profilePicUrl.value)),
+                onTap: () => controller.getImage(),
+              )),
               SizedBox(height: 20),
               ElevatedButton(
-                onPressed: () {
-                  if (_formKey.currentState != null && _formKey.currentState!.validate()) {
-                    Individual newUser = Individual(
-                      fullName: _nameController.text,
-                      email: _emailController.text,
-                      phoneNumber: _phoneController.text,
-                      gender: _selectedGender!,
-                      role: _selectedRole!,
-                      profilePicUrl: _profilePicUrl, // Include profile pic URL in User model
-                    );
-                    _databaseHelper.insertUser(newUser);
-                    Navigator.pop(context);
-                  }
-                },
+                onPressed: controller.saveUser,
                 child: Text('Save'),
               ),
             ],

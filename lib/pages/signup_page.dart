@@ -147,6 +147,8 @@
 //   }
 // }
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
+import 'package:my_application/pages/login_page.dart';
 import 'package:my_application/utils/database_helper.dart';
 import 'package:my_application/models/user_model.dart';
 
@@ -295,6 +297,7 @@ class SignUpPage extends StatelessWidget {
     ));
 
     // Navigate to login page or any other screen
-    Navigator.pushReplacementNamed(context, '/login');
+    // Navigator.of(context).pushReplacement(MaterialPageRoute(builder: (context) => LoginPage()));
+    Get.offAllNamed('/login');
   }
 }
